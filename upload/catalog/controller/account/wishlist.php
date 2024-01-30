@@ -15,7 +15,7 @@ class WishList extends \Opencart\System\Engine\Controller {
 		if (!$this->customer->isLogged() || (!isset($this->request->get['customer_token']) || !isset($this->session->data['customer_token']) || ($this->request->get['customer_token'] != $this->session->data['customer_token']))) {
 			$this->session->data['redirect'] = $this->url->link('account/wishlist', 'language=' . $this->config->get('config_language'));
 
-			$this->response->redirect($this->url->link('account/login', 'language=' . $this->config->get('config_language'), true));
+			$this->response->redirect($this->url->link('account/login', 'language=' . $this->config->get('config_language')));
 		}
 
 		$this->document->setTitle($this->language->get('heading_title'));
@@ -60,8 +60,6 @@ class WishList extends \Opencart\System\Engine\Controller {
 	}
 
 	/**
-	 * List
-	 *
 	 * @return void
 	 */
 	public function list(): void {
@@ -71,13 +69,11 @@ class WishList extends \Opencart\System\Engine\Controller {
 	}
 
 	/**
-	 * Get List
-	 *
 	 * @return string
 	 */
 	public function getList(): string {
 		$data['wishlist'] = $this->url->link('account/wishlist.list', 'language=' . $this->config->get('config_language') . (isset($this->session->data['customer_token']) ? '&customer_token=' . $this->session->data['customer_token'] : ''));
-		$data['cart_add'] = $this->url->link('checkout/cart.add', 'language=' . $this->config->get('config_language'));
+		$data['add_to_cart'] = $this->url->link('checkout/cart.add', 'language=' . $this->config->get('config_language'));
 		$data['remove'] = $this->url->link('account/wishlist.remove', 'language=' . $this->config->get('config_language') . (isset($this->session->data['customer_token']) ? '&customer_token=' . $this->session->data['customer_token'] : ''));
 
 		$data['products'] = [];
@@ -97,23 +93,23 @@ class WishList extends \Opencart\System\Engine\Controller {
 				} else {
 					$image = false;
 				}
-
+// The beginning of the changes
 				if ($product_info['quantity'] <= 0) {
 					$this->load->model('localisation/stock_status');
 
 					$stock_status_info = $this->model_localisation_stock_status->getStockStatus($product_info['stock_status_id']);
 
 					if ($stock_status_info) {
-						$stock = $stock_status_info['name'];
+						$data['stock'] = $stock_status_info['name'];
 					} else {
-						$stock = '';
+						$data['stock'] = '';
 					}
 				} elseif ($this->config->get('config_stock_display')) {
-					$stock = $product_info['quantity'];
+					$data['stock'] = $product_info['quantity'];
 				} else {
-					$stock = $this->language->get('text_instock');
+					$data['stock'] = $this->language->get('text_instock');
 				}
-
+// the end of the changes, dont forget line 130
 				if ($this->customer->isLogged() || !$this->config->get('config_customer_price')) {
 					$price = $this->currency->format($this->tax->calculate($product_info['price'], $product_info['tax_class_id'], $this->config->get('config_tax')), $this->session->data['currency']);
 				} else {
@@ -131,7 +127,8 @@ class WishList extends \Opencart\System\Engine\Controller {
 					'thumb'      => $image,
 					'name'       => $product_info['name'],
 					'model'      => $product_info['model'],
-					'stock'      => $stock,
+					// 'stock'      => $stock,
+					'stock'      => $data['stock'],					
 					'price'      => $price,
 					'special'    => $special,
 					'minimum'    => $product_info['minimum'] > 0 ? $product_info['minimum'] : 1,
@@ -146,8 +143,6 @@ class WishList extends \Opencart\System\Engine\Controller {
 	}
 
 	/**
-	 * Add
-	 *
 	 * @return void
 	 */
 	public function add(): void {
@@ -200,8 +195,6 @@ class WishList extends \Opencart\System\Engine\Controller {
 	}
 
 	/**
-	 * Remove
-	 *
 	 * @return void
 	 */
 	public function remove(): void {
